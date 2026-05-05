@@ -12,6 +12,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isSuperadmin, setIsSuperadmin] = useState(false);
 
   const handleLogin = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
@@ -33,6 +34,13 @@ export default function LoginPage() {
 
       setIsLoggingIn(true);
       
+      if (response.user.role === 'superadmin') {
+        setIsSuperadmin(true);
+        localStorage.setItem('userRole', 'superadmin');
+      } else {
+        localStorage.setItem('userRole', response.user.role || 'user');
+      }
+      
       // Start the pouring animation after a tiny delay so CSS transitions trigger correctly
       setTimeout(() => {
         setLiquidHeight('h-[85%]');
@@ -49,6 +57,32 @@ export default function LoginPage() {
   };
 
   if (isLoggingIn) {
+    if (isSuperadmin) {
+      return (
+        <div className="min-h-screen bg-black flex flex-col items-center justify-center text-white font-sans p-4 relative overflow-hidden">
+          <div className="mb-12 flex flex-col items-center gap-4 animate-pulse">
+            <span className="text-3xl font-serif tracking-widest text-white/80 text-center">MASTER OVERRIDE</span>
+            <span className="text-xl tracking-widest text-[#c95a00]">Initializing Superadmin Protocols...</span>
+          </div>
+
+          {/* Giant Rabbit SVG Animation */}
+          <div className="relative w-64 h-64 animate-[bounce_1.5s_ease-in-out_infinite]">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full text-white drop-shadow-[0_0_15px_rgba(201,90,0,0.8)]">
+              <path d="M13 16a3 3 0 0 1 2.24 5c-2.47-2.37-1.07-4.14-1.07-4.14A1.9 1.9 0 0 0 13 16Z" />
+              <path d="M11 16a3 3 0 0 0-2.24 5c2.47-2.37 1.07-4.14 1.07-4.14A1.9 1.9 0 0 1 11 16Z" />
+              <path d="M12 16a4 4 0 0 0 4-4 4 4 0 0 0-4-4 4 4 0 0 0-4 4 4 4 0 0 0 4 4Z" />
+              <path d="M16 12V6a4 4 0 0 0-8 0v6" />
+              <path d="M8 6a4 4 0 0 1 8 0" />
+              <path d="M16 6a2 2 0 0 1 2 2v2" />
+              <path d="M8 6a2 2 0 0 0-2 2v2" />
+              <circle cx="10" cy="11" r="0.5" fill="currentColor" />
+              <circle cx="14" cy="11" r="0.5" fill="currentColor" />
+            </svg>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="min-h-screen bg-black flex flex-col items-center justify-center text-white font-sans p-4 relative">
         

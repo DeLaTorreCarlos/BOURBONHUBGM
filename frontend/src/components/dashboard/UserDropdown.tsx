@@ -5,7 +5,16 @@ import Link from 'next/link';
 
 export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Check localStorage for superadmin role enforcement
+    if (typeof window !== 'undefined') {
+      const role = localStorage.getItem('userRole');
+      setUserRole(role);
+    }
+  }, []);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -38,8 +47,21 @@ export default function UserDropdown() {
             <Link href="/dashboard/userdetails?tab=settings" className="px-4 py-2 hover:bg-gray-100 transition-colors" onClick={() => setIsOpen(false)}>
               Settings
             </Link>
+            
+            {userRole === 'superadmin' && (
+              <>
+                <div className="h-px bg-gray-200 my-1"></div>
+                <Link href="#" className="px-4 py-2 text-indigo-700 bg-indigo-50/50 hover:bg-indigo-100 transition-colors font-bold" onClick={() => setIsOpen(false)}>
+                  MasterOptions
+                </Link>
+              </>
+            )}
+
             <div className="h-px bg-gray-200 my-1"></div>
-            <Link href="/" className="px-4 py-2 hover:bg-gray-100 transition-colors text-red-600 font-medium" onClick={() => setIsOpen(false)}>
+            <Link href="/" className="px-4 py-2 hover:bg-gray-100 transition-colors text-red-600 font-medium" onClick={() => {
+              setIsOpen(false);
+              localStorage.removeItem('userRole'); // Clear session
+            }}>
               Logout
             </Link>
           </div>
