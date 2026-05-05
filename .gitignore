@@ -1,0 +1,8 @@
+backend/venv/
+backend/logs/
+backend/backend.log
+.DS_Store
+backend/.DS_Store
+frontend/.env.local
+backend/.env
+
