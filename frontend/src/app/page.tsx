@@ -12,6 +12,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isSuperadmin, setIsSuperadmin] = useState(false);
 
   const handleLogin = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
@@ -33,15 +34,34 @@ export default function LoginPage() {
 
       setIsLoggingIn(true);
       
-      // Start the pouring animation after a tiny delay so CSS transitions trigger correctly
-      setTimeout(() => {
-        setLiquidHeight('h-[85%]');
-      }, 100);
+      // Store JWT token locally
+      if (response.access_token) {
+        localStorage.setItem('token', response.access_token);
+      }
+      
+      if (response.user.role === 'superadmin') {
+        setIsSuperadmin(true);
+        localStorage.setItem('userRole', 'superadmin');
+        localStorage.setItem('userName', response.user.full_name || response.user.email);
+        
+        // Wait longer for the giant rabbit animation to complete
+        setTimeout(() => {
+          router.push('/dashboard');
+        }, 3600);
+      } else {
+        localStorage.setItem('userRole', response.user.role || 'user');
+        localStorage.setItem('userName', response.user.full_name || response.user.email);
+        
+        // Start the pouring animation after a tiny delay so CSS transitions trigger correctly
+        setTimeout(() => {
+          setLiquidHeight('h-[85%]');
+        }, 100);
 
-      // Redirect to dashboard right as the glass fills up
-      setTimeout(() => {
-        router.push('/dashboard');
-      }, 2200);
+        // Redirect to dashboard right as the glass fills up
+        setTimeout(() => {
+          router.push('/dashboard');
+        }, 2200);
+      }
 
     } catch (err: unknown) {
       setError("Invalid username or password");
@@ -49,6 +69,31 @@ export default function LoginPage() {
   };
 
   if (isLoggingIn) {
+    if (isSuperadmin) {
+      return (
+        <div className="min-h-screen bg-black flex flex-col items-center justify-center text-white font-sans p-4 relative overflow-hidden">
+          <div className="mb-12 flex flex-col items-center gap-4 animate-pulse">
+            <span className="text-3xl font-serif tracking-widest text-white/80 text-center">MASTER OVERRIDE</span>
+            <span className="text-xl tracking-widest text-[#c95a00]">Initializing Superadmin Protocols...</span>
+          </div>
+
+          {/* Giant Rabbit SVG Animation */}
+          <div className="relative w-[86rem] h-[86rem] animate-[bounce_1.5s_ease-in-out_infinite] mt-4">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="0.8" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full text-white drop-shadow-[0_0_35px_rgba(201,90,0,1)] rotate-180">
+              {/* Ears */}
+              <path d="M13 16a3 3 0 0 1 2.24 5c-2.47-2.37-1.07-4.14-1.07-4.14A1.9 1.9 0 0 0 13 16Z" />
+              <path d="M11 16a3 3 0 0 0-2.24 5c2.47-2.37 1.07-4.14 1.07-4.14A1.9 1.9 0 0 1 11 16Z" />
+              {/* Head Outline */}
+              <path d="M12 16a4 4 0 0 0 4-4 4 4 0 0 0-4-4 4 4 0 0 0-4 4 4 4 0 0 0 4 4Z" />
+              {/* Eyes */}
+              <circle cx="10" cy="11" r="0.5" fill="currentColor" />
+              <circle cx="14" cy="11" r="0.5" fill="currentColor" />
+            </svg>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="min-h-screen bg-black flex flex-col items-center justify-center text-white font-sans p-4 relative">
         

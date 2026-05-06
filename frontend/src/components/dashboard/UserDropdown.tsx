@@ -5,7 +5,19 @@ import Link from 'next/link';
 
 export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string | null>('Mr Wizard');
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Check localStorage for superadmin role enforcement
+    if (typeof window !== 'undefined') {
+      const role = localStorage.getItem('userRole');
+      const name = localStorage.getItem('userName');
+      setUserRole(role);
+      if (name) setUserName(name);
+    }
+  }, []);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -19,7 +31,7 @@ export default function UserDropdown() {
 
   return (
     <div className="relative flex items-center gap-3" ref={dropdownRef}>
-      <span className="text-sm cursor-pointer tracking-wide" onClick={() => setIsOpen(!isOpen)}>Mr Wizard</span>
+      <span className="text-sm cursor-pointer tracking-wide" onClick={() => setIsOpen(!isOpen)}>{userName}</span>
       <div 
         className="w-6 h-6 bg-white rounded-full flex items-center justify-center overflow-hidden cursor-pointer"
         onClick={() => setIsOpen(!isOpen)}
@@ -38,8 +50,23 @@ export default function UserDropdown() {
             <Link href="/dashboard/userdetails?tab=settings" className="px-4 py-2 hover:bg-gray-100 transition-colors" onClick={() => setIsOpen(false)}>
               Settings
             </Link>
+            
+            {(userRole === 'superadmin' || userRole === 'admin') && (
+              <>
+                <div className="h-px bg-gray-200 my-1"></div>
+                <Link href="/dashboard/admin?tab=users" className="px-4 py-2 text-indigo-700 bg-indigo-50/50 hover:bg-indigo-100 transition-colors font-bold" onClick={() => setIsOpen(false)}>
+                  {userRole === 'superadmin' ? 'MasterOptions' : 'Administration'}
+                </Link>
+              </>
+            )}
+
             <div className="h-px bg-gray-200 my-1"></div>
-            <Link href="/" className="px-4 py-2 hover:bg-gray-100 transition-colors text-red-600 font-medium" onClick={() => setIsOpen(false)}>
+            <Link href="/" className="px-4 py-2 hover:bg-gray-100 transition-colors text-red-600 font-medium" onClick={() => {
+              setIsOpen(false);
+              localStorage.removeItem('userRole'); // Clear session
+              localStorage.removeItem('userName');
+              localStorage.removeItem('token');
+            }}>
               Logout
             </Link>
           </div>
