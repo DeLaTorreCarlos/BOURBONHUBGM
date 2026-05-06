@@ -130,6 +130,12 @@ graph TD
   * **Networking Integration:** Implemented custom Next.js `fetchFromAPI` module routing environment variables to directly contact backend database for full-stack compatibility.
   * **Authentication UX:** Added a text toggle helper ("Show/Hide") on the password property and hardwired frontend login submission state to the backend `/auth/login` endpoint preserving the Bourbon pour animation sequence asynchronously.
 
+* **May 5, 2026:**
+  * **System Analytics Dashboard:** Scaffolded a comprehensive metrics view inside the Master Override `/dashboard/admin` layout.
+  * **Hardware & Storage Tracking:** Created a 4-column metric grid UI dynamically tracking Database Objects, S3 Cloud Storage limits (featuring a CSS glowing segmented progress bar), Worker Status queues, and FastAPI Latency.
+  * **Security Visualization:** Configured an "Active Authentication Sessions" table to monitor distributed JWT lifecycle states, session origin formats, and real-time user uptimes to actively govern concurrency.
+  * **User Operations:** Fully activated the internal "Edit User" mechanism bridging `handleUpdateUser` PUT requests through a targeted React UI modal mapping dynamically to local states and Python schemas natively.
+
 ---
 
 ## Backend Changelog & Added Features Summary
@@ -137,6 +143,7 @@ graph TD
 **May 2026 - Phase 2 & API Development Phase**
 
 * **May 5, 2026:**
+  * **Authentication Upgrade:** Deprecated placeholder mock authentication in favor of active JWT (JSON Web Token) generation (`app/core/security.py`). Cryptographically hashed passwords with `passlib[bcrypt]` and deployed `get_current_user` local token decoding dependencies. Connected real frontend header arrays securely to backend authorization scopes natively.
   * **Infrastructure Setup:** Created `docker-compose.yml` to orchestrate local PostgreSQL 15 and Redis 7 containers. This ensures environment consistency and enables an easy switch between development and production configurations.
   * **Environment Configuration:** Configured Pydantic-based `Settings` (`app/core/config.py`) relying on a `.env` file for managing dynamic `DATABASE_URL` strings and application environments.
   * **API Foundation:** Structured a foundational FastAPI project (`app/main.py`) with SQLAlchemy connection pooling (`app/db/database.py`).

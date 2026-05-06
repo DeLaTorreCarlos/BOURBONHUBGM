@@ -34,22 +34,34 @@ export default function LoginPage() {
 
       setIsLoggingIn(true);
       
+      // Store JWT token locally
+      if (response.access_token) {
+        localStorage.setItem('token', response.access_token);
+      }
+      
       if (response.user.role === 'superadmin') {
         setIsSuperadmin(true);
         localStorage.setItem('userRole', 'superadmin');
+        localStorage.setItem('userName', response.user.full_name || response.user.email);
+        
+        // Wait longer for the giant rabbit animation to complete
+        setTimeout(() => {
+          router.push('/dashboard');
+        }, 3600);
       } else {
         localStorage.setItem('userRole', response.user.role || 'user');
-      }
-      
-      // Start the pouring animation after a tiny delay so CSS transitions trigger correctly
-      setTimeout(() => {
-        setLiquidHeight('h-[85%]');
-      }, 100);
+        localStorage.setItem('userName', response.user.full_name || response.user.email);
+        
+        // Start the pouring animation after a tiny delay so CSS transitions trigger correctly
+        setTimeout(() => {
+          setLiquidHeight('h-[85%]');
+        }, 100);
 
-      // Redirect to dashboard right as the glass fills up
-      setTimeout(() => {
-        router.push('/dashboard');
-      }, 2200);
+        // Redirect to dashboard right as the glass fills up
+        setTimeout(() => {
+          router.push('/dashboard');
+        }, 2200);
+      }
 
     } catch (err: unknown) {
       setError("Invalid username or password");
@@ -66,15 +78,14 @@ export default function LoginPage() {
           </div>
 
           {/* Giant Rabbit SVG Animation */}
-          <div className="relative w-64 h-64 animate-[bounce_1.5s_ease-in-out_infinite]">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full text-white drop-shadow-[0_0_15px_rgba(201,90,0,0.8)]">
+          <div className="relative w-[86rem] h-[86rem] animate-[bounce_1.5s_ease-in-out_infinite] mt-4">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="0.8" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full text-white drop-shadow-[0_0_35px_rgba(201,90,0,1)] rotate-180">
+              {/* Ears */}
               <path d="M13 16a3 3 0 0 1 2.24 5c-2.47-2.37-1.07-4.14-1.07-4.14A1.9 1.9 0 0 0 13 16Z" />
               <path d="M11 16a3 3 0 0 0-2.24 5c2.47-2.37 1.07-4.14 1.07-4.14A1.9 1.9 0 0 1 11 16Z" />
+              {/* Head Outline */}
               <path d="M12 16a4 4 0 0 0 4-4 4 4 0 0 0-4-4 4 4 0 0 0-4 4 4 4 0 0 0 4 4Z" />
-              <path d="M16 12V6a4 4 0 0 0-8 0v6" />
-              <path d="M8 6a4 4 0 0 1 8 0" />
-              <path d="M16 6a2 2 0 0 1 2 2v2" />
-              <path d="M8 6a2 2 0 0 0-2 2v2" />
+              {/* Eyes */}
               <circle cx="10" cy="11" r="0.5" fill="currentColor" />
               <circle cx="14" cy="11" r="0.5" fill="currentColor" />
             </svg>

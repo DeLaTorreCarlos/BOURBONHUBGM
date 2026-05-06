@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from app.db.database import get_db
 from app.models.user import User
+from app.core.security import verify_password, create_access_token
 
 router = APIRouter()
 
@@ -12,7 +13,6 @@ class LoginRequest(BaseModel):
 
 @router.post("/login")
 def login(request: LoginRequest, db: Session = Depends(get_db)):
-    # Very simple authentication for now based on the fake hashing in crud
     user = db.query(User).filter(
         (User.email == request.username) | (User.full_name == request.username)
     ).first()
@@ -20,8 +20,14 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
     
-    # Check password manually since crud/user.py uses naive "password" + "notreallyhashed"
-    if user.hashed_password != request.password + "notreallyhashed":
+    if not verify_password(request.password, user.hashed_password):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
         
-    return {"message": "Login successful", "user": {"id": user.id, "email": user.email, "role": user.role}}
+    access_token = create_access_token(data={"sub": str(user.id)})
+    
+    return {
+        "message": "Login successful", 
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user": {"id": user.id, "email": user.email, "role": user.role, "full_name": user.full_name}
+    }

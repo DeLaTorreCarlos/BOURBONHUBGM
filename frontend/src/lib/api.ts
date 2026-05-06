@@ -3,15 +3,29 @@ export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1
 export async function fetchFromAPI(endpoint: string, options: RequestInit = {}) {
   const url = `${API_BASE_URL}${endpoint}`;
   
-  const headers = {
+  let token = null;
+  if (typeof window !== 'undefined') {
+    token = localStorage.getItem('token');
+  }
+  
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...options.headers,
+    ...options.headers as Record<string, string>,
   };
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
 
   const response = await fetch(url, {
     ...options,
     headers,
   });
+
+  if (response.status === 401 && typeof window !== 'undefined') {
+    localStorage.removeItem('token');
+    window.location.href = '/';
+  }
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
