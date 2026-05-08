@@ -237,7 +237,7 @@ export default function LoginPage() {
     return (
       <div className="min-h-screen bg-black flex flex-col items-center justify-center text-white font-sans p-4 relative">
         <div className="mb-12 flex items-center gap-4">
-          <span className="text-3xl font-serif tracking-widest text-[#c95a00]">RECUPERAR CONTRASEÑA</span>
+          <span className="text-3xl font-serif tracking-widest text-white">RECUPERAR CONTRASEÑA</span>
         </div>
         
         <form className="w-full max-w-sm flex flex-col gap-6" onSubmit={handleForgotPassword}>
@@ -247,7 +247,7 @@ export default function LoginPage() {
             onChange={(e) => setForgotEmail(e.target.value)}
             placeholder="CORREO ELECTRÓNICO / EMAIL" 
             required
-            className="bg-transparent border border-[#c95a00] px-4 py-3 outline-none text-white placeholder-gray-400 text-sm tracking-widest text-center"
+            className="bg-transparent border border-white px-4 py-3 outline-none text-white placeholder-gray-400 text-sm tracking-widest text-center"
           />
           {error && <div className="text-red-500 text-sm font-bold text-center">{error}</div>}
           {forgotMessage && <div className="text-green-500 text-sm font-bold text-center">{forgotMessage}</div>}
@@ -277,7 +277,7 @@ export default function LoginPage() {
     return (
       <div className="min-h-screen bg-black flex flex-col items-center justify-center text-white font-sans p-4 relative">
         <div className="mb-12 flex items-center gap-4">
-          <span className="text-3xl font-serif tracking-widest text-[#c95a00]">CONFIGURAR 2FA / SETUP 2FA</span>
+          <span className="text-3xl font-serif tracking-widest text-white">CONFIGURAR 2FA / SETUP 2FA</span>
         </div>
         
         <form className="w-full max-w-sm flex flex-col gap-6 items-center" onSubmit={handle2FASetupVerify}>
@@ -307,7 +307,7 @@ export default function LoginPage() {
           <div className="flex flex-col gap-4 mt-6 w-full">
             <button 
               type="submit"
-              className="border border-[#c95a00] text-[#c95a00] px-12 py-3 font-bold hover:bg-[#c95a00] hover:text-black transition-colors text-sm tracking-widest"
+              className="border border-white text-white px-12 py-3 font-bold hover:bg-white hover:text-black transition-colors text-sm tracking-widest"
             >
               VERIFICAR Y GUARDAR
             </button>
@@ -350,7 +350,7 @@ export default function LoginPage() {
             <button 
               type="button" 
               onClick={(e) => handleLogin(e as unknown as React.MouseEvent<HTMLButtonElement>)} 
-              className="border border-[#c95a00] text-[#c95a00] px-12 py-3 font-bold hover:bg-[#c95a00] hover:text-black transition-colors text-sm tracking-widest"
+              className="border border-white text-white px-12 py-3 font-bold hover:bg-white hover:text-black transition-colors text-sm tracking-widest"
             >
               VERIFICAR / VERIFY
             </button>
