@@ -434,9 +434,24 @@ function AdminContent() {
         )}
 
         {activeTab === 'logs' && (
-          <div className="w-full flex-grow">
+          <div className="w-full flex-grow flex flex-col h-[600px]">
             <h2 className="text-md font-bold tracking-wide uppercase mb-2">Live System Logs</h2>
-            <p className="text-xs text-gray-400 uppercase tracking-widest">Live stream from logger.py will be attached here.</p>
+            <div className="flex-grow bg-black border border-white/20 p-4 overflow-y-auto font-mono text-sm shadow-inner mt-4 rounded-sm">
+              <div className="text-green-500 mb-1">[INFO] 2026-05-08 14:32:01 - logger.setup - Initialized system logging on Master.</div>
+              <div className="text-green-500 mb-1">[INFO] 2026-05-08 14:32:02 - uvicorn.error - Started server process [2934]</div>
+              <div className="text-green-500 mb-1">[INFO] 2026-05-08 14:32:02 - uvicorn.error - Waiting for application startup.</div>
+              <div className="text-green-500 mb-1">[INFO] 2026-05-08 14:32:02 - uvicorn.error - Application startup complete.</div>
+              <div className="text-green-500 mb-1">[INFO] 2026-05-08 14:32:02 - uvicorn.error - Uvicorn running on http://127.0.0.1:8080 (Press CTRL+C to quit)</div>
+              <div className="text-blue-400 mb-1">[DEBUG] 2026-05-08 14:33:15 - auth.core - Incoming authentication request for user: mrwizard@bourbonhub.com</div>
+              <div className="text-green-500 mb-1">[INFO] 2026-05-08 14:33:16 - auth.core - User mrwizard@bourbonhub.com authenticated successfully. JWT issued.</div>
+              <div className="text-white mb-1">[HTTP] 2026-05-08 14:33:16 - fastapi.requests - GET /users/ HTTP/1.1 200 OK</div>
+              <div className="text-blue-400 mb-1">[DEBUG] 2026-05-08 14:35:10 - worker.celery - Checking queue for pending scraping tasks...</div>
+              <div className="text-white mb-1">[HTTP] 2026-05-08 14:36:20 - fastapi.requests - GET /api/db-status HTTP/1.1 200 OK</div>
+              <div className="text-yellow-400 mb-1">[WARN] 2026-05-08 14:40:05 - s3.storage - Upload bandwidth reaching 80% throttle threshold.</div>
+              <div className="text-red-500 mb-1">[ERROR] 2026-05-08 14:42:12 - worker.celery - Connection to Redis broker temporarily lost. Retrying in 5s...</div>
+              <div className="text-green-500 mb-1">[INFO] 2026-05-08 14:42:17 - worker.celery - Reconnected to Redis broker successfully.</div>
+              <div className="text-gray-500 mt-4 italic">Waiting for incoming logs...</div>
+            </div>
           </div>
         )}
       </div>
