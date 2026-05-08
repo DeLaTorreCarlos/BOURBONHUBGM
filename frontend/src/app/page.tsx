@@ -116,17 +116,36 @@ export default function LoginPage() {
     if (!setupUserId || !totpCode) return;
     setError(null);
     try {
-      await fetchFromAPI('/auth/2fa/verify', {
+      const response = await fetchFromAPI('/auth/2fa/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_id: setupUserId, totp_code: totpCode }),
       });
-      // Setup successful
+      // Setup successful, auto-login
       setNeeds2FASetup(false);
-      setNeeds2FA(true); 
-      setTotpCode('');
-      const btn = document.getElementById('login-btn');
-      if (btn) btn.click();
+      setIsLoggingIn(true);
+      
+      if (response.access_token) {
+        localStorage.setItem('token', response.access_token);
+      }
+      
+      if (response.user && response.user.role === 'superadmin') {
+        setIsSuperadmin(true);
+        localStorage.setItem('userRole', 'superadmin');
+        localStorage.setItem('userName', response.user.full_name || response.user.email);
+        setTimeout(() => {
+          router.push('/dashboard');
+        }, 3600);
+      } else {
+        localStorage.setItem('userRole', response.user?.role || 'user');
+        localStorage.setItem('userName', response.user?.full_name || response.user?.email);
+        setTimeout(() => {
+          setLiquidHeight('h-[85%]');
+        }, 100);
+        setTimeout(() => {
+          router.push('/dashboard');
+        }, 2200);
+      }
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message || 'Invalid 2FA code during setup');

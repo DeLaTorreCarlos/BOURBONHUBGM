@@ -116,6 +116,12 @@ def verify_2fa(request: Verify2FARequest, db: Session = Depends(get_db)):
     if totp.verify(request.totp_code):
         user.is_2fa_enabled = True
         db.commit()
-        return {"message": "2FA successfully enabled."}
+        access_token = create_access_token(data={"sub": str(user.id)})
+        return {
+            "message": "2FA successfully enabled.",
+            "access_token": access_token,
+            "token_type": "bearer",
+            "user": {"id": user.id, "email": user.email, "role": user.role, "full_name": user.full_name}
+        }
         
     raise HTTPException(status_code=400, detail="Invalid 2FA code")
