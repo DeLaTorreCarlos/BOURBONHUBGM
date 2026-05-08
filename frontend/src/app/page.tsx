@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { fetchFromAPI } from '@/lib/api';
+import QRCode from 'react-qr-code';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -11,6 +12,21 @@ export default function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  
+  // 2FA Auth State
+  const [needs2FA, setNeeds2FA] = useState(false);
+  const [totpCode, setTotpCode] = useState('');
+  
+  // 2FA Setup State
+  const [needs2FASetup, setNeeds2FASetup] = useState(false);
+  const [setupUserId, setSetupUserId] = useState<number | null>(null);
+  const [qrCodeUri, setQrCodeUri] = useState<string | null>(null);
+  
+  // Forgot Password State
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotMessage, setForgotMessage] = useState<string | null>(null);
+  
   const [error, setError] = useState<string | null>(null);
   const [isSuperadmin, setIsSuperadmin] = useState(false);
 
@@ -25,8 +41,30 @@ export default function LoginPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username, password, totp_code: totpCode || undefined }),
       });
+
+      if (response.requires_2fa_setup) {
+        setNeeds2FASetup(true);
+        setSetupUserId(response.user_id);
+        setError(null);
+        // Fetch the QR code
+        try {
+          const setupResponse = await fetchFromAPI(`/auth/2fa/setup?user_id=${response.user_id}`, {
+            method: 'POST'
+          });
+          setQrCodeUri(setupResponse.provisioning_uri);
+        } catch (err) {
+          setError("Error fetching 2FA setup");
+        }
+        return; // Halt and show 2FA setup screen
+      }
+
+      if (response.requires_2fa) {
+        setNeeds2FA(true);
+        setError(null);
+        return; // Halt and show 2FA screen
+      }
 
       if (!response.message) {
         throw new Error("Invalid response");
@@ -64,7 +102,59 @@ export default function LoginPage() {
       }
 
     } catch (err: unknown) {
-      setError("Invalid username or password");
+      if (err instanceof Error) {
+        setError(err.message || "Invalid username or password");
+      } else {
+        setError("Invalid username or password");
+      }
+    }
+  };
+
+
+  const handle2FASetupVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!setupUserId || !totpCode) return;
+    setError(null);
+    try {
+      await fetchFromAPI('/auth/2fa/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: setupUserId, totp_code: totpCode }),
+      });
+      // Setup successful
+      setNeeds2FASetup(false);
+      setNeeds2FA(true); 
+      setTotpCode('');
+      const btn = document.getElementById('login-btn');
+      if (btn) btn.click();
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message || 'Invalid 2FA code during setup');
+      } else {
+        setError('Invalid 2FA code during setup');
+      }
+    }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setForgotMessage(null);
+    setError(null);
+    try {
+      await fetchFromAPI('/auth/forgot-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: forgotEmail }),
+      });
+      setForgotMessage("Se ha enviado un enlace de recuperación si el correo existe.");
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message || "Error trying to process the request.");
+      } else {
+        setError("Error trying to process the request.");
+      }
     }
   };
 
@@ -124,6 +214,140 @@ export default function LoginPage() {
     );
   }
 
+  if (showForgotPassword) {
+    return (
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center text-white font-sans p-4 relative">
+        <div className="mb-12 flex items-center gap-4">
+          <span className="text-3xl font-serif tracking-widest text-[#c95a00]">RECUPERAR CONTRASEÑA</span>
+        </div>
+        
+        <form className="w-full max-w-sm flex flex-col gap-6" onSubmit={handleForgotPassword}>
+          <input 
+            type="email" 
+            value={forgotEmail}
+            onChange={(e) => setForgotEmail(e.target.value)}
+            placeholder="CORREO ELECTRÓNICO / EMAIL" 
+            required
+            className="bg-transparent border border-[#c95a00] px-4 py-3 outline-none text-white placeholder-gray-400 text-sm tracking-widest text-center"
+          />
+          {error && <div className="text-red-500 text-sm font-bold text-center">{error}</div>}
+          {forgotMessage && <div className="text-green-500 text-sm font-bold text-center">{forgotMessage}</div>}
+          
+          <div className="flex flex-col gap-4 mt-6">
+            <button 
+              type="submit"
+              className="border border-white px-12 py-3 font-bold hover:bg-white hover:text-black transition-colors text-sm tracking-widest"
+            >
+              ENVIAR ENLACE / SEND LINK
+            </button>
+            <button 
+              type="button" 
+              onClick={() => setShowForgotPassword(false)}
+              className="text-gray-400 hover:text-white text-xs tracking-widest transition-colors mt-4 underline"
+            >
+              VOLVER AL LOGIN / BACK TO LOGIN
+            </button>
+          </div>
+        </form>
+      </div>
+    );
+  }
+
+
+  if (needs2FASetup) {
+    return (
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center text-white font-sans p-4 relative">
+        <div className="mb-12 flex items-center gap-4">
+          <span className="text-3xl font-serif tracking-widest text-[#c95a00]">CONFIGURAR 2FA / SETUP 2FA</span>
+        </div>
+        
+        <form className="w-full max-w-sm flex flex-col gap-6 items-center" onSubmit={handle2FASetupVerify}>
+          <p className="text-center text-sm text-gray-400 tracking-widest mb-4">
+            Escanea este código QR.<br/>
+            Scan this QR code.
+          </p>
+          
+          {qrCodeUri ? (
+            <div className="bg-white p-4 rounded-xl">
+              <QRCode value={qrCodeUri} size={200} />
+            </div>
+          ) : (
+            <div className="text-gray-400 animate-pulse">Cargando código QR...</div>
+          )}
+
+          <input 
+            type="text" 
+            value={totpCode}
+            onChange={(e) => setTotpCode(e.target.value)}
+            placeholder="000000" 
+            maxLength={6}
+            className="bg-transparent border border-white px-4 py-6 outline-none text-white placeholder-gray-600 text-3xl tracking-[1em] text-center font-mono w-full mt-4"
+          />
+          {error && <div className="text-red-500 text-sm font-bold text-center">{error}</div>}
+          
+          <div className="flex flex-col gap-4 mt-6 w-full">
+            <button 
+              type="submit"
+              className="border border-[#c95a00] text-[#c95a00] px-12 py-3 font-bold hover:bg-[#c95a00] hover:text-black transition-colors text-sm tracking-widest"
+            >
+              VERIFICAR Y GUARDAR
+            </button>
+            <button 
+              type="button" 
+              onClick={() => {setNeeds2FASetup(false); setTotpCode('');}}
+              className="text-gray-400 hover:text-white text-xs tracking-widest transition-colors mt-4 underline text-center"
+            >
+              CANCEL
+            </button>
+          </div>
+        </form>
+      </div>
+    );
+  }
+
+  if (needs2FA) {
+    return (
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center text-white font-sans p-4 relative">
+        <div className="mb-12 flex items-center gap-4">
+          <span className="text-3xl font-serif tracking-widest text-white/50">2FA VERIFICATION</span>
+        </div>
+        
+        <form className="w-full max-w-sm flex flex-col gap-6" onSubmit={(e) => { e.preventDefault(); handleLogin(e as unknown as React.MouseEvent<HTMLButtonElement>); }}>
+          <p className="text-center text-sm text-gray-400 tracking-widest mb-4">
+            Abre tu aplicación autenticadora y escribe el código de 6 dígitos.<br/>
+            Open your authenticator app for the 6-digit code.
+          </p>
+          <input 
+            type="text" 
+            value={totpCode}
+            onChange={(e) => setTotpCode(e.target.value)}
+            placeholder="000000" 
+            maxLength={6}
+            className="bg-transparent border border-white px-4 py-6 outline-none text-white placeholder-gray-600 text-3xl tracking-[1em] text-center font-mono w-full"
+          />
+          {error && <div className="text-red-500 text-sm font-bold text-center">{error}</div>}
+          
+          <div className="flex flex-col gap-4 mt-6">
+            <button 
+              type="button" 
+              onClick={(e) => handleLogin(e as unknown as React.MouseEvent<HTMLButtonElement>)} 
+              className="border border-[#c95a00] text-[#c95a00] px-12 py-3 font-bold hover:bg-[#c95a00] hover:text-black transition-colors text-sm tracking-widest"
+            >
+              VERIFICAR / VERIFY
+            </button>
+            <button 
+              type="button" 
+              onClick={() => {setNeeds2FA(false); setTotpCode('');}}
+              className="text-gray-400 hover:text-white text-xs tracking-widest transition-colors mt-4 underline"
+            >
+              CANCELAR / CANCEL
+            </button>
+          </div>
+        </form>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-black flex flex-col items-center justify-center text-white font-sans p-4">
       <div className="mb-16 flex items-center gap-4">
@@ -155,12 +379,19 @@ export default function LoginPage() {
           </button>
         </div>
         {error && <div className="text-red-500 text-sm font-bold text-center">{error}</div>}
-        <div className="flex justify-center mt-6">
+        <div className="flex justify-center mt-6 flex-col items-center gap-6">
           <button 
-            onClick={handleLogin} 
-            className="border border-white px-12 py-3 font-bold hover:bg-white hover:text-black transition-colors text-sm tracking-widest"
+            id="login-btn" onClick={handleLogin} 
+            className="border border-white px-12 py-3 w-full font-bold hover:bg-white hover:text-black transition-colors text-sm tracking-widest"
           >
             LOGIN
+          </button>
+          <button 
+            type="button"
+            onClick={() => setShowForgotPassword(true)}
+            className="text-gray-400 hover:text-white text-xs tracking-widest transition-colors underline"
+          >
+            ¿OLVIDASTE TU CONTRASEÑA? / FORGOT PASSWORD?
           </button>
         </div>
       </form>
